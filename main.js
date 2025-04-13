@@ -1,117 +1,80 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const board = document.getElementById('board');
-    const cells = document.querySelectorAll('.cell');
-    const statusDisplay = document.getElementById('status');
-    const newGameButton = document.getElementById('new-game');
-    const resetScoreButton = document.getElementById('reset-score');
-    const scoreXDisplay = document.getElementById('score-x');
-    const scoreODisplay = document.getElementById('score-o');
+const board = document.getElementById('board');
+const status = document.getElementById('status');
+const resetBtn = document.getElementById('reset-btn');
+const startGameBtn = document.getElementById('start-game');
+const backBtn = document.getElementById('back-btn');
+const homeScreen = document.getElementById('home-screen');
+const gameScreen = document.getElementById('game-screen');
 
-    let gameActive = true;
-    let currentPlayer = 'X';
-    let gameState = ['', '', '', '', '', '', '', '', ''];
-    let scoreX = 0;
-    let scoreO = 0;
+let currentPlayer = 'X';
+let gameBoard = ['', '', '', '', '', '', '', '', ''];
+let gameActive = true;
 
-    const winningConditions = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8],
-        [0, 3, 6],
-        [1, 4, 7],
-        [2, 5, 8],
-        [0, 4, 8],
-        [2, 4, 6]
+function createBoard() {
+    board.innerHTML = '';
+    for (let i = 0; i < 9; i++) {
+        const cell = document.createElement('div');
+        cell.classList.add('cell');
+        cell.setAttribute('data-index', i);
+        cell.addEventListener('click', handleCellClick);
+        board.appendChild(cell);
+    }
+}
+
+function handleCellClick(e) {
+    const index = e.target.getAttribute('data-index');
+    if (gameBoard[index] || !gameActive) return;
+
+    gameBoard[index] = currentPlayer;
+    e.target.textContent = currentPlayer;
+    
+    if (checkWinner()) {
+        status.textContent = `Player ${currentPlayer} wins!`;
+        gameActive = false;
+    } else if (gameBoard.every(cell => cell)) {
+        status.textContent = "It's a draw!";
+        gameActive = false;
+    } else {
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        status.textContent = `Player ${currentPlayer}'s turn`;
+    }
+}
+
+function checkWinner() {
+    const winPatterns = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+        [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+        [0, 4, 8], [2, 4, 6] // diagonals
     ];
 
-    const setStatusMessage = (message) => {
-        statusDisplay.textContent = message;
-    };
+    return winPatterns.some(pattern => {
+        const [a, b, c] = pattern;
+        return gameBoard[a] && 
+               gameBoard[a] === gameBoard[b] && 
+               gameBoard[a] === gameBoard[c];
+    });
+}
 
-    const winningMessage = () => {
-        return `Player ${currentPlayer} has won!`;
-    };
+function resetGame() {
+    gameBoard = ['', '', '', '', '', '', '', '', ''];
+    gameActive = true;
+    currentPlayer = 'X';
+    status.textContent = `Player ${currentPlayer}'s turn`;
+    createBoard();
+}
 
-    const drawMessage = () => {
-        return `Game ended in a draw!`;
-    };
-
-    const currentPlayerTurn = () => {
-        return `Player ${currentPlayer}'s turn`;
-    };
-
-    const handleCellClick = (e) => {
-        const clickedCell = e.target;
-        const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
-
-        if (gameState[clickedCellIndex] !== '' || !gameActive) {
-            return;
-        }
-
-        gameState[clickedCellIndex] = currentPlayer;
-        clickedCell.textContent = currentPlayer;
-        clickedCell.classList.add(currentPlayer.toLowerCase());
-
-        if (checkWin()) {
-            gameActive = false;
-            setStatusMessage(winningMessage());
-            if (currentPlayer === 'X') {
-                scoreX++;
-                scoreXDisplay.textContent = scoreX;
-            } else {
-                scoreO++;
-                scoreODisplay.textContent = scoreO;
-            }
-            return;
-        }
-
-        if (checkDraw()) {
-            return;
-        }
-
-        swapPlayer();
-        setStatusMessage(currentPlayerTurn());
-    };
-
-    const checkWin = () => {
-        return winningConditions.some(condition => {
-            return gameState[condition[0]] && 
-                   gameState[condition[0]] === gameState[condition[1]] && 
-                   gameState[condition[0]] === gameState[condition[2]];
-        });
-    };
-
-    const checkDraw = () => {
-        return gameState.includes('') ? false : true;
-    };
-
-    const swapPlayer = () => {
-        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
-    };
-
-    const handleNewGame = () => {
-        gameActive = true;
-        currentPlayer = 'X';
-        gameState = ['', '', '', '', '', '', '', '', ''];
-        setStatusMessage(currentPlayerTurn());
-        cells.forEach(cell => {
-            cell.textContent = '';
-            cell.classList.remove('x');
-            cell.classList.remove('o');
-        });
-    };
-
-    const handleResetScore = () => {
-        scoreX = 0;
-        scoreO = 0;
-        scoreXDisplay.textContent = scoreX;
-        scoreODisplay.textContent = scoreO;
-        handleNewGame();
-    };
-
-    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
-    newGameButton.addEventListener('click', handleNewGame);
-    resetScoreButton.addEventListener('click', handleResetScore);
-
-    setStatusMessage(currentPlayerTurn());
+startGameBtn.addEventListener('click', () => {
+    homeScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+    resetGame();
 });
+
+backBtn.addEventListener('click', () => {
+    homeScreen.style.display = 'block';
+    gameScreen.style.display = 'none';
+});
+
+resetBtn.addEventListener('click', resetGame);
+
+// Initialize status
+status.textContent = `Player ${currentPlayer}'s turn`;
